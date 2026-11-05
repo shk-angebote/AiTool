@@ -1,0 +1,6 @@
+{
+  "name": "HandwerkerAI Studio",
+  "description": "Kreativ-Werkstatt für viralen Handwerker-Content, Baustellen-Satire, TikTok/Reels-Skripte, Sprüche und Song-Teaser wie Baustella – Silikon und Bauschaum.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
