@@ -26,6 +26,7 @@ import {
   TRACK_VERTICAL_URL,
   QUICK_TOPICS,
   INITIAL_CONTENT_ITEMS,
+  generateOffline916Content,
 } from './data/initialContent';
 import { ContentCard } from './components/ContentCard';
 import { baustellaBeat } from './utils/baustellaAudio';
@@ -75,7 +76,7 @@ const FORMAT_OPTIONS: { id: ContentFormat; label: string; sub: string }[] = [
 export default function App() {
   const [items, setItems] = useState<GeneratedContentItem[]>(() => {
     try {
-      const saved = localStorage.getItem('handwerkerai_items_916_v2');
+      const saved = localStorage.getItem('handwerkerai_items_916_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -108,7 +109,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('handwerkerai_items_916_v2', JSON.stringify(items));
+      localStorage.setItem('handwerkerai_items_916_v3', JSON.stringify(items));
     } catch {
       // ignore storage quota errors
     }
@@ -151,28 +152,31 @@ export default function App() {
     };
 
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('./api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.error || 'Der KI-Render-Kran lädt gerade nach. Bitte nochmal klicken.'
-        );
+      const contentType = response.headers.get('content-type') || '';
+      if (response.ok && contentType.includes('application/json')) {
+        const data = await response.json();
+        if (data?.success && data?.item) {
+          setItems((prev) => [data.item, ...prev]);
+          setActiveFilter('all');
+          return;
+        }
       }
 
-      const newItem: GeneratedContentItem = data.item;
-      setItems((prev) => [newItem, ...prev]);
+      // Static Hosting / GitHub Pages Fallback when backend route is not present
+      const fallbackItem = generateOffline916Content(payload);
+      setItems((prev) => [fallbackItem, ...prev]);
       setActiveFilter('all');
-    } catch (err: unknown) {
-      setErrorMessage(
-        err instanceof Error
-          ? err.message
-          : 'Verbindungsfehler zur HandwerkerAI 9:16 Render-Zentrale.'
-      );
+    } catch {
+      // Seamless fallback on static hosts (GitHub Pages) where ./api/generate is unreachable
+      const fallbackItem = generateOffline916Content(payload);
+      setItems((prev) => [fallbackItem, ...prev]);
+      setActiveFilter('all');
     } finally {
       setIsGenerating(false);
       setRemixingId(null);
