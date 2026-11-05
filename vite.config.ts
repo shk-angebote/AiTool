@@ -5,6 +5,8 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // Wichtig für GitHub Pages, damit die Pfade im Unterverzeichnis /AiTool/ stimmen:
+    base: '/AiTool/', 
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
